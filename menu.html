@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Flavors & Fork - Menu</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Flavors & Fork</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="menu.html">Menu</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reservation.html">Reservation</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item d-flex align-items-center ms-3">
+                        <span id="status-badge" class="badge rounded-pill me-3"
+                            style="font-size: 0.8rem; transition: all 0.3s;">Checking...</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="theme-toggle">
+                            <label class="form-check-label text-white" for="theme-toggle">Dark Mode</label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Filter Bar -->
+    <div class="row justify-content-center mb-5 sticky-filter-bar" data-aos="fade-up">
+        <div class="col-md-12 text-center">
+            <div class="btn-group flex-wrap gap-2" role="group" id="menu-filters">
+                <button type="button" class="btn btn-outline-light active" data-filter="all">All</button>
+                <button type="button" class="btn btn-outline-success" data-filter="veg">Veg</button>
+                <button type="button" class="btn btn-outline-danger" data-filter="non-veg">Non-Veg</button>
+                <button type="button" class="btn btn-outline-warning" data-filter="starters">Starters</button>
+                <button type="button" class="btn btn-outline-warning" data-filter="main">Main Course</button>
+                <button type="button" class="btn btn-outline-warning" data-filter="desserts">Desserts</button>
+                <button type="button" class="btn btn-outline-warning" data-filter="beverages">Beverages</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="container">
+        <h2 class="text-center mb-4">Our Menu</h2>
+        <div class="row" id="menu-container">
+            <!-- Items will be injected here by JS -->
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 mb-4 mb-md-0 mx-auto text-center">
+                    <h5 class="text-uppercase fw-bold text-warning mb-3">
+                        <i class="bi bi-envelope-paper-fill me-2"></i>Join Our Community
+                    </h5>
+                    <p class="text-white-50 small mb-4">Get exclusive offers, secret menu updates, and 10% off your
+                        first dine-in!</p>
+
+                    <form id="newsletter-form" onsubmit="handleSubscribe(event)">
+                        <div class="input-group mb-3 shadow-sm">
+                            <input type="email" id="newsletter-email"
+                                class="form-control rounded-pill rounded-end-0 border-0 py-2 ps-4"
+                                placeholder="Your Email Address"
+                                style="background: rgba(255,255,255,0.1); color: #fff;">
+                            <button class="btn btn-warning rounded-pill rounded-start-0 fw-bold px-4" type="submit">
+                                Subscribe
+                            </button>
+                        </div>
+                        <small id="newsletter-msg" class="fw-bold" style="display: none;"></small>
+                    </form>
+                </div>
+            </div>
+            <div class="text-center p-3 mt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <p class="mb-0">&copy; 2025 Flavors & Fork. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Smart Bill Drawer -->
+    <div id="cart-bar"
+        class="fixed-bottom bg-success text-white p-3 shadow-lg d-flex justify-content-between align-items-center"
+        style="cursor: pointer; z-index: 1050;" data-bs-toggle="offcanvas" data-bs-target="#cartDrawer">
+        <h5 class="mb-0 ms-2"><i class="bi bi-cart4 me-2"></i><span id="cart-count">0</span> Items</h5>
+        <h5 class="mb-0 me-3">Total: ₹<span id="cart-total-bar">0</span> <i class="bi bi-chevron-up ms-2 small"></i>
+        </h5>
+    </div>
+
+    <div class="offcanvas offcanvas-bottom h-auto" tabindex="-1" id="cartDrawer" aria-labelledby="cartLabel"
+        style="min-height: 40vh; max-height: 80vh;">
+        <div class="offcanvas-header border-bottom border-secondary bg-dark">
+            <h5 class="offcanvas-title fw-bold text-warning" id="cartLabel">Your Order</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body bg-dark text-white">
+            <div id="cart-items-container" class="mb-4">
+                <p class="text-white-50 text-center mt-5">Your cart is empty.</p>
+            </div>
+            <div class="border-top border-secondary pt-3" id="bill-details" style="display: none;">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Subtotal</span>
+                    <span>₹<span id="bill-subtotal">0</span></span>
+                </div>
+                <div class="d-flex justify-content-between mb-1 text-white-50 small">
+                    <span>GST (5%)</span>
+                    <span>₹<span id="bill-tax">0</span></span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 text-white-50 small">
+                    <span>Service Charge</span>
+                    <span>₹20</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold text-warning fs-5 border-top border-secondary pt-2">
+                    <span>Grand Total</span>
+                    <span>₹<span id="bill-grand-total">0</span></span>
+                </div>
+                <button class="btn btn-warning w-100 fw-bold mt-3 rounded-pill" onclick="alert('Order Placed! 🚀')">
+                    Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true" style="z-index: 3000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary shadow-lg">
+
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-warning fw-bold">
+                        <i class="bi bi-wallet2 me-2"></i>Select Payment Method
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-3 mb-4">
+
+                        <input type="radio" class="btn-check" name="payment-method" id="pay-upi" autocomplete="off"
+                            checked>
+                        <label
+                            class="btn btn-outline-warning text-start p-3 d-flex align-items-center justify-content-between"
+                            for="pay-upi">
+                            <span><i class="bi bi-qr-code me-2"></i> UPI / GPay / PhonePe</span>
+                            <span class="badge bg-warning text-dark">Fast</span>
+                        </label>
+                        <input type="radio" class="btn-check" name="payment-method" id="pay-card" autocomplete="off">
+                        <label class="btn btn-outline-warning text-start p-3" for="pay-card">
+                            <i class="bi bi-credit-card me-2"></i> Credit / Debit Card
+                        </label>
+                        <input type="radio" class="btn-check" name="payment-method" id="pay-cash" autocomplete="off">
+                        <label class="btn btn-outline-warning text-start p-3" for="pay-cash">
+                            <i class="bi bi-cash-stack me-2"></i> Pay on Counter
+                        </label>
+                    </div>
+                    <div
+                        class="bg-white text-dark p-3 rounded d-flex justify-content-between align-items-center fw-bold">
+                        <span>Total Payable:</span>
+                        <span class="fs-5">₹<span id="modal-pay-amount">0</span></span>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success fw-bold px-4" onclick="processPayment()">
+                        <span id="pay-btn-text">Pay Now</span>
+                        <span id="pay-spinner" class="spinner-border spinner-border-sm ms-2"
+                            style="display: none;"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+    <!-- Back to Top Button -->
+    <button id="btn-back-to-top" class="btn btn-warning btn-floating shadow"
+        style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem;">&uarr;</button>
+
+</body>
+
+</html>
