@@ -668,12 +668,21 @@ function setupFilters() {
 /**
  * Sets up table selection interactions.
  */
+/**
+ * Sets up table selection interactions.
+ */
 function setupTableSelection() {
     const tables = document.querySelectorAll('.table-box');
     const selectedTableInput = document.getElementById('selectedTable');
 
     tables.forEach(table => {
         table.addEventListener('click', () => {
+            // Prevent selection if booked
+            if (table.classList.contains('booked')) {
+                // alert('This table is already booked for the selected date.'); // Optional feedback
+                return;
+            }
+
             // Reset: Remove 'selected' from all tables
             tables.forEach(t => t.classList.remove('selected'));
 
@@ -901,6 +910,13 @@ function handleBooking(event) {
         document.getElementById('dateError').innerText = '';
     }
 
+    // Check if table is already booked for this specific date (Double Check)
+    const bookings = JSON.parse(localStorage.getItem('restaurantBookings')) || {};
+    if (bookings[date] && bookings[date].includes(selectedTableInput.value)) {
+        alert('This table is already booked for the selected date. Please choose another.');
+        return;
+    }
+
     // Loading Simulation
     const originalBtnText = submitBtn.innerText;
     submitBtn.innerText = 'Processing...';
@@ -921,23 +937,25 @@ function handleBooking(event) {
         document.getElementById('conf-date').innerText = date;
         document.getElementById('conf-guests').innerText = guests;
 
-        // 4. Mark Table as Booked (Persist)
+        // 4. Mark Table as Booked (Persist with Date)
         const tableId = selectedTableInput.value;
 
-        // Get existing bookings
-        let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
-        if (!bookedTables.includes(tableId)) {
-            bookedTables.push(tableId);
-            localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
+        // Get existing bookings object: { "YYYY-MM-DD": ["1", "2"] }
+        let allBookings = JSON.parse(localStorage.getItem('restaurantBookings')) || {};
+
+        // Initialize array for this date if it doesn't exist
+        if (!allBookings[date]) {
+            allBookings[date] = [];
         }
 
-        // Update UI immediately
-        const tableEl = document.querySelector(`.table-box[data-table="${tableId}"]`);
-        if (tableEl) {
-            tableEl.classList.add('booked');
-            tableEl.classList.remove('selected');
-            tableEl.innerHTML = `Table ${tableId}<br><small>Booked</small>`;
+        // Add table ID if not already booked
+        if (!allBookings[date].includes(tableId)) {
+            allBookings[date].push(tableId);
+            localStorage.setItem('restaurantBookings', JSON.stringify(allBookings));
         }
+
+        // Update UI immediately (Only if the selected date matches the input date - which it should)
+        updateTableAvailability();
 
         // Remove 'selected' class from all tables (visual cleanup)
         document.querySelectorAll('.table-box.selected').forEach(t => t.classList.remove('selected'));
@@ -951,16 +969,31 @@ function handleBooking(event) {
 }
 
 /**
- * Loads Booked Tables from LocalStorage on page load.
+ * Updates the availability of tables based on the selected date.
  */
-function loadBookedTables() {
-    const bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
+function updateTableAvailability() {
+    const dateInput = document.getElementById('dateInput');
+    if (!dateInput) return;
 
-    bookedTables.forEach(tableId => {
+    const selectedDate = dateInput.value;
+    const allBookings = JSON.parse(localStorage.getItem('restaurantBookings')) || {};
+    const bookedTablesForDate = allBookings[selectedDate] || [];
+
+    // 1. Reset ALL tables to Available first
+    document.querySelectorAll('.table-box').forEach(table => {
+        const id = table.getAttribute('data-table');
+        table.classList.remove('booked', 'selected');
+        // Restore original text (or just simplify)
+        table.innerHTML = `Table ${id}`;
+        // Re-enable clicks logic is handled by CSS (pointer-events) or check in click handler
+        // For visual, we just remove the class.
+    });
+
+    // 2. Mark specific tables as Booked
+    bookedTablesForDate.forEach(tableId => {
         const tableEl = document.querySelector(`.table-box[data-table="${tableId}"]`);
         if (tableEl) {
             tableEl.classList.add('booked');
-            tableEl.classList.remove('selected'); // ensure it's not selected
             tableEl.innerHTML = `Table ${tableId}<br><small>Booked</small>`;
         }
     });
@@ -1037,6 +1070,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupFilters();
     } else if (path.endsWith('reservation.html')) {
         setupTableSelection();
-        loadBookedTables(); // Load booked state
+
+        // Date Input Setup
+        const dateInput = document.getElementById('dateInput');
+        if (dateInput) {
+            // Set Default Date to Today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            // Set Min Date to Today
+            dateInput.min = today;
+
+            // Listen for changes
+            dateInput.addEventListener('change', updateTableAvailability);
+        }
+
+        // Initial Load
+        updateTableAvailability();
     }
 });
