@@ -2,10 +2,10 @@
 if (history.scrollRestoration) {
     history.scrollRestoration = 'manual';
 }
-window.onbeforeunload = function () {
-    window.scrollTo(0, 0);
-}
-// 2. Clear the '#contact' from the URL so it doesn't jump back
+window.onbeforeunload = function() {
+        window.scrollTo(0, 0);
+    }
+    // 2. Clear the '#contact' from the URL so it doesn't jump back
 if (window.location.hash) {
     history.replaceState(null, null, ' ');
     window.scrollTo(0, 0);
@@ -341,7 +341,7 @@ function addToCart(id) {
     if (existingItem) {
         existingItem.qty++;
     } else {
-        cart.push({ ...item, qty: 1 });
+        cart.push({...item, qty: 1 });
     }
 
     // Trigger UI Updates
@@ -647,11 +647,9 @@ function setupFilters() {
             const filteredItems = menuData.filter(item => {
                 if (filterValue === 'all') {
                     return true; // Show everything
-                }
-                else if (filterValue === 'veg' || filterValue === 'non-veg') {
+                } else if (filterValue === 'veg' || filterValue === 'non-veg') {
                     return item.type === filterValue; // Check Type (Veg/Non-Veg)
-                }
-                else {
+                } else {
                     return item.category === filterValue; // Check Category (Starters, Main, etc.)
                 }
             });
@@ -933,9 +931,24 @@ function handleBooking(event) {
 
         // 3. Populate Details
         document.getElementById('conf-name').innerText = name;
-        document.getElementById('conf-table').innerText = selectedTableInput.value;
-        document.getElementById('conf-date').innerText = date;
-        document.getElementById('conf-guests').innerText = guests;
+        // Rewrite innerHTML with inline styles to force black text (overriding global dark mode CSS)
+        const summaryBox = document.querySelector('#booking-success .alert');
+        if (summaryBox) {
+            summaryBox.innerHTML = `
+                <p class='mb-1' style='color: black !important;'>
+                    <strong style='color: black !important;'>Table No:</strong> 
+                    <span style='color: black !important;'>${selectedTableInput.value}</span>
+                </p>
+                <p class='mb-1' style='color: black !important;'>
+                    <strong style='color: black !important;'>Date:</strong> 
+                    <span style='color: black !important;'>${date}</span>
+                </p>
+                <p class='mb-0' style='color: black !important;'>
+                    <strong style='color: black !important;'>Guests:</strong> 
+                    <span style='color: black !important;'>${guests}</span>
+                </p>
+            `;
+        }
 
         // 4. Mark Table as Booked (Persist with Date)
         const tableId = selectedTableInput.value;
@@ -1010,7 +1023,7 @@ function setupBackToTop() {
     if (!mybutton) return;
 
     // Scroll Logic
-    window.onscroll = function () {
+    window.onscroll = function() {
         if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
             mybutton.style.display = "block";
         } else {
@@ -1053,7 +1066,7 @@ function checkShopStatus() {
 }
 
 // Initialize Pages
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async() => {
     // Check Status Immediately
     checkShopStatus();
 
@@ -1088,3 +1101,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateTableAvailability();
     }
 });
+
+// --- Live Search Bar Logic ---
+const searchInput = document.getElementById('menuSearch');
+
+if (searchInput) {
+    searchInput.addEventListener('input', function(event) {
+        const searchTerm = event.target.value.toLowerCase();
+
+        // Filter the array based on name or description
+        const filteredItems = menuData.filter(item => {
+            const matchesName = item.name.toLowerCase().includes(searchTerm);
+            const matchesDesc = item.description.toLowerCase().includes(searchTerm);
+            return matchesName || matchesDesc;
+        });
+
+        // Re-render the menu instantly
+        displayMenu(filteredItems);
+    });
+}

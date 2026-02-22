@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap');
 
 /* CSS Variables for Light/Dark Theme */
+
 :root {
     --bg-color: #f8f9fa;
     --text-color: #212529;
@@ -37,7 +38,9 @@ h3,
     color: var(--gold-color) !important;
 }
 
+
 /* Card Styling */
+
 .card {
     background-color: var(--card-bg) !important;
     color: var(--text-color) !important;
@@ -45,7 +48,9 @@ h3,
     /* Subtle border for definition */
 }
 
+
 /* Dark mode specific overrides */
+
 .navbar {
     background-color: var(--navbar-bg) !important;
 }
@@ -59,7 +64,9 @@ body.dark-mode .list-group-item {
     /* Subtle white border for dark mode */
 }
 
+
 /* Ensure table boxes look good in dark mode */
+
 body.dark-mode .table-box {
     border-color: #444;
     background-color: #2c2c2c;
@@ -69,7 +76,9 @@ body.dark-mode .table-box:hover {
     background-color: #3a3a3a;
 }
 
+
 /* Table Selection Styles */
+
 .table-box {
     border: 2px solid #ddd;
     padding: 15px;
@@ -101,7 +110,9 @@ body.dark-mode .table-box:hover {
     border-color: #28a745 !important;
 }
 
+
 /* Booked Table Style (Prevent Double Booking) */
+
 .table-box.booked {
     background-color: #dc3545 !important;
     /* Danger Red */
@@ -113,7 +124,9 @@ body.dark-mode .table-box:hover {
     border-color: #dc3545 !important;
 }
 
+
 /* Animations */
+
 .card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -123,13 +136,14 @@ body.dark-mode .table-box:hover {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
 }
 
+
 /* Fade-In Animation */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -140,9 +154,12 @@ body.dark-mode .table-box:hover {
     animation: fadeIn 0.5s ease forwards;
 }
 
+
 /* --- Visual Enhancements --- */
 
+
 /* Gold Buttons */
+
 .btn-outline-gold {
     color: var(--gold-color);
     border-color: var(--gold-color);
@@ -154,14 +171,18 @@ body.dark-mode .table-box:hover {
     border-color: var(--gold-color);
 }
 
+
 /* Gold Badge */
+
 .badge-gold {
     background-color: var(--gold-color);
     color: #000;
     font-weight: 700;
 }
 
+
 /* Placeholders */
+
 .placeholder-box {
     height: 200px;
     display: flex;
@@ -180,13 +201,17 @@ body.dark-mode .table-box:hover {
     text-align: center;
 }
 
+
 /* Map Container Shadow */
+
 .map-container iframe {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border-radius: 8px;
 }
 
+
 /* 'Visit Us' Details */
+
 .contact-details p {
     font-size: 1.1rem;
     line-height: 1.8;
@@ -197,7 +222,9 @@ body.dark-mode .table-box:hover {
     margin-right: 10px;
 }
 
+
 /* Dark Mode Improvements */
+
 body.dark-mode .card-title,
 body.dark-mode .card-text,
 body.dark-mode h5,
@@ -209,7 +236,9 @@ body.dark-mode .text-muted {
     color: #aeaeae !important;
 }
 
+
 /* Hero Section */
+
 #home-hero {
     background-color: #212529;
     background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80');
@@ -243,7 +272,9 @@ body.dark-mode #interiors.bg-light {
     background-color: var(--bg-color) !important;
 }
 
+
 /* Newsletter Input Refinements */
+
 #newsletter-email::placeholder {
     color: rgba(255, 255, 255, 0.6) !important;
 }
@@ -256,7 +287,9 @@ body.dark-mode #interiors.bg-light {
     outline: none !important;
 }
 
+
 /* Cart Bar Animation */
+
 #cart-bar {
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -270,13 +303,17 @@ body.dark-mode #interiors.bg-light {
     visibility: visible;
 }
 
+
 /* 1. Ensure Cart is ON TOP of the green bar */
+
 .offcanvas {
     z-index: 2050 !important;
     /* Higher than fixed-bottom bar */
 }
 
+
 /* 2. Item Row Styling */
+
 .cart-item-row {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
@@ -285,7 +322,9 @@ body.dark-mode #interiors.bg-light {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+
 /* 2b. Cart Item Card (New Design) */
+
 .cart-item-card {
     background-color: #212529;
     /* Dark background */
@@ -301,7 +340,9 @@ body.dark-mode #interiors.bg-light {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+
 /* 3. The 'Bill Receipt' Box */
+
 .bill-receipt-card {
     background: #212529;
     border-radius: 15px;
@@ -311,14 +352,20 @@ body.dark-mode #interiors.bg-light {
     margin-top: 20px;
 }
 
+
 /* 4. Checkout Button */
+
+
 /* 1. Ensure the Payment Modal is the topmost layer */
+
 .modal {
     z-index: 3000 !important;
     /* Higher than the Offcanvas (2050) */
 }
 
+
 /* 2. Also bring the dark 'Backdrop' (the dark overlay) to the front */
+
 .modal-backdrop {
     z-index: 2999 !important;
     /* Just behind the modal, but above the cart */
@@ -335,9 +382,12 @@ body.dark-mode #interiors.bg-light {
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
 }
 
+
 /* --- Fix Reservation Form Visibility --- */
 
+
 /* Table Grid Layout (5x2) */
+
 #table-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -353,9 +403,15 @@ body.dark-mode #interiors.bg-light {
     }
 }
 
+
 /* Table Selection Styles */
+
+
 /* 1. Make Table Selection Text Dark & Bold */
+
+
 /* Targets any button or div inside the table selection area */
+
 #table-grid button,
 .btn-check+label,
 .table-option {
@@ -365,15 +421,21 @@ body.dark-mode #interiors.bg-light {
     /* Make it thick */
 }
 
+
 /* 2. Fix Date & Input Text */
+
+
 /* Force text inside inputs to be black, even in dark mode */
+
 input.form-control,
 select.form-control {
     color: #000000 !important;
     font-weight: 600;
 }
 
+
 /* 3. Fix the "Placeholder" Date (e.g., mm/dd/yyyy) */
+
 ::-webkit-input-placeholder {
     /* Chrome/Safari */
     color: #444 !important;
@@ -385,19 +447,27 @@ select.form-control {
     opacity: 1;
 }
 
+
 /* Hero Menu Button */
+
+
 /* Hero Menu Button Structure */
+
 .hero-btn {
     min-width: 160px;
 }
 
+
 /* Hero Menu Button Text - Isolate Bold Styles */
+
 .hero-btn-text {
     font-size: 1.25rem !important;
     font-weight: 900 !important;
 }
 
+
 /* Sticky Menu Filter Bar - Floating Pill */
+
 .sticky-filter-bar {
     position: sticky;
     top: 20px;
@@ -421,7 +491,9 @@ select.form-control {
     transition: all 0.3s ease;
 }
 
+
 /* Adjust button group on mobile for sticky bar */
+
 .sticky-filter-bar .btn-group {
     overflow-x: auto;
     white-space: nowrap;
@@ -437,7 +509,9 @@ select.form-control {
     /* Hide scrollbar Chrome/Safari */
 }
 
+
 /* --- FAQ Accordion Styles --- */
+
 #faq .accordion-item {
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -470,4 +544,68 @@ select.form-control {
     padding-bottom: 1.5rem;
     font-size: 1.1rem;
     line-height: 1.6;
+}
+
+
+/* --- Contact --- */
+
+.contact-box {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease-in-out;
+}
+
+.contact-box:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 193, 7, 0.3);
+    transform: translateX(5px);
+}
+
+.contact-box i {
+    color: var(--gold-color);
+    margin-right: 10px;
+}
+
+
+/* --- Emojis --- */
+
+.emoji-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px auto;
+    font-size: 2rem;
+    background-color: transparent;
+    transition: all 0.3s ease-in-out;
+}
+
+
+/* Hover Effect */
+
+.card:hover .emoji-circle {
+    border-color: var(--gold-color);
+    background-color: rgba(255, 193, 7, 0.05);
+    /* Restore tint on hover */
+}
+
+
+/* Search Bar Styling */
+
+#menuSearch:focus {
+    background-color: #212529;
+    /* Keeps it dark */
+    color: white;
+    border-color: var(--gold-color, #ffc107);
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    /* Gold glow */
+}
+
+#menuSearch::placeholder {
+    color: #adb5bd;
+    /* Muted text for the placeholder */
 }
