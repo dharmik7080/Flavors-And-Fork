@@ -2,10 +2,10 @@
 if (history.scrollRestoration) {
     history.scrollRestoration = 'manual';
 }
-window.onbeforeunload = function() {
-        window.scrollTo(0, 0);
-    }
-    // 2. Clear the '#contact' from the URL so it doesn't jump back
+window.onbeforeunload = function () {
+    window.scrollTo(0, 0);
+}
+// 2. Clear the '#contact' from the URL so it doesn't jump back
 if (window.location.hash) {
     history.replaceState(null, null, ' ');
     window.scrollTo(0, 0);
@@ -320,14 +320,17 @@ function validateGuestCount(count) {
 // --- Display Logic ---
 
 /**
+ * Saves the global cart array to localStorage.
+ */
+function saveCartToLocal() {
+    localStorage.setItem('flavorsAndForkCart', JSON.stringify(cart));
+}
+
+/**
  * Global variable to track the cart items.
  */
 let cart = [];
 
-/**
- * Adds an item to the cart and updates the display.
- * @param {number} id - The ID of the menu item.
- */
 /**
  * Adds an item to the cart and updates the display.
  * @param {number} id - The ID of the menu item.
@@ -341,8 +344,11 @@ function addToCart(id) {
     if (existingItem) {
         existingItem.qty++;
     } else {
-        cart.push({...item, qty: 1 });
+        cart.push({ ...item, qty: 1 });
     }
+
+    // Save changes
+    saveCartToLocal();
 
     // Trigger UI Updates
     updateCartUI();
@@ -350,6 +356,27 @@ function addToCart(id) {
 
     // Optional: Feedback vibration (mobile)
     if (navigator.vibrate) navigator.vibrate(50);
+
+    // Show Beautiful Toast Notification
+    showCartToast(item.name);
+}
+
+/**
+ * Displays a Bootstrap Toast when an item is added to the cart.
+ * @param {string} itemName - The name of the item added.
+ */
+function showCartToast(itemName) {
+    const toastEl = document.getElementById('myToast');
+    const toastNameSpan = document.getElementById('toastItemName');
+
+    if (toastEl && toastNameSpan) {
+        // Update the text dynamically
+        toastNameSpan.innerText = `${itemName} added to your order!`;
+
+        // Initialize and show the Bootstrap Toast
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
 }
 
 /**
@@ -365,6 +392,9 @@ function removeFromCart(id) {
         }
     }
 
+    // Save changes
+    saveCartToLocal();
+
     // Trigger UI Updates
     updateCartUI();
     updateItemButton(id); // Only update this specific button
@@ -375,6 +405,8 @@ function removeFromCart(id) {
  */
 function clearCart() {
     cart = []; // Empty the cart array
+    localStorage.removeItem('flavorsAndForkCart'); // Remove the saved data too
+
     updateCartUI(); // Update the cart drawer UI
 
     // Close the Offcanvas Drawer
@@ -489,10 +521,19 @@ function updateCartUI() {
 
             // Update Bill Details HTML (The Receipt Card)
             billDetails.innerHTML = `
+                <div class="my-3 promo-code-container">
+                    <div class="input-group promo-group" style="box-shadow: none; transition: box-shadow 0.3s ease;">
+                        <span class="input-group-text bg-dark text-white border-secondary promo-icon-container" style="border-right: none bg-dark; transition: border-color 0.3s ease;"><i class="bi bi-tags-fill"></i></span>
+                        <input type="text" id="promoCodeInput" class="form-control bg-dark text-white border-secondary promo-input custom-gold-input" placeholder="Enter promo code" style="border-left: none; box-shadow: none; transition: border-color 0.3s ease;">
+                        <button id="applyPromoBtn" class="btn btn-warning fw-bold text-dark promo-btn" type="button" style="font-size: 0.9rem; z-index: 0;">Apply</button>
+                    </div>
+                    <p id="promoMessage" class="mt-2 mb-0 small" style="display: none;"></p>
+                </div>
+
                 <div class="bill-receipt-card">
                     <div class="d-flex justify-content-between mb-2">
                         <span>Item Total</span>
-                        <span>₹${subtotal}</span>
+                        <span id="cartItemTotal">₹${subtotal}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2 text-white-50 small">
                         <span>Taxes & Charges (5%)</span>
@@ -507,7 +548,7 @@ function updateCartUI() {
                     
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="fs-5 fw-bold">To Pay</span>
-                        <span class="fs-2 fw-bold text-warning font-serif">₹${Math.round(grandTotal)}</span>
+                        <span class="fs-2 fw-bold text-warning font-serif" id="cartFinalTotal">₹${Math.round(grandTotal)}</span>
                     </div>
                     
                     <button class="btn btn-checkout w-100 mb-3" onclick="openPaymentModal()">
@@ -519,7 +560,71 @@ function updateCartUI() {
                     </button>
                 </div>
             `;
+
+            // Attach event listener for promo code logic
+            const applyBtn = document.getElementById('applyPromoBtn');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', applyPromoCode);
+            }
         }
+    }
+}
+
+/**
+ * Applies the promo code logic.
+ */
+function applyPromoCode() {
+    const promoInput = document.getElementById('promoCodeInput');
+    const promoMessage = document.getElementById('promoMessage');
+    const cartItemTotalEl = document.getElementById('cartItemTotal');
+    const cartFinalTotalEl = document.getElementById('cartFinalTotal');
+    const applyBtn = document.getElementById('applyPromoBtn');
+
+    if (!promoInput || !promoMessage || !cartItemTotalEl || !cartFinalTotalEl || !applyBtn) return;
+
+    const code = promoInput.value.trim().toUpperCase();
+
+    // Dictionary of valid promo codes and their percentage discount
+    const validCodes = {
+        'BDAY20': 0.20,
+        'WELCOME10': 0.10,
+        'FLAVOR50': 0.50
+    };
+
+    if (validCodes.hasOwnProperty(code)) {
+        // Get numerical values from DOM elements
+        const itemTotalText = cartItemTotalEl.innerText.replace('₹', '').trim();
+        const currentFinalTotalText = cartFinalTotalEl.innerText.replace('₹', '').trim();
+
+        const itemTotal = parseFloat(itemTotalText);
+        let finalTotal = parseFloat(currentFinalTotalText);
+
+        // Calculate discount (discount applies to the item total)
+        const discountRate = validCodes[code];
+        const discountAmount = itemTotal * discountRate;
+
+        // Subtract discount from final total
+        finalTotal -= discountAmount;
+
+        // Update DOM Final Total
+        cartFinalTotalEl.innerText = `₹${Math.round(finalTotal)}`;
+
+        // Display Success Message
+        promoMessage.innerText = `Discount applied: -₹${Math.round(discountAmount)}`;
+        promoMessage.className = 'mt-2 mb-0 small text-success fw-bold';
+        promoMessage.style.display = 'block';
+
+        // Update Button State
+        applyBtn.innerText = 'Applied';
+        applyBtn.className = 'btn btn-success fw-bold text-white promo-btn';
+        applyBtn.disabled = true;
+        promoInput.disabled = true;
+
+    } else {
+        // Display Error Message
+        promoMessage.innerText = code === '' ? 'Please enter a code.' : 'Invalid promo code.';
+        promoMessage.className = 'mt-2 mb-0 small text-danger fw-bold';
+        promoMessage.style.display = 'block';
     }
 }
 
@@ -635,32 +740,64 @@ function displayMenu(items) {
  */
 function setupFilters() {
     const filterButtons = document.querySelectorAll('#menu-filters button');
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // 1. Remove active class from all buttons
-            filterButtons.forEach(b => b.classList.remove('active'));
-            // 2. Add active class to clicked button
-            btn.classList.add('active');
+    const searchInput = document.getElementById('menuSearch');
 
-            const filterValue = btn.getAttribute('data-filter');
-            // 3. Filter the Data
-            const filteredItems = menuData.filter(item => {
-                if (filterValue === 'all') {
-                    return true; // Show everything
-                } else if (filterValue === 'veg' || filterValue === 'non-veg') {
-                    return item.type === filterValue; // Check Type (Veg/Non-Veg)
-                } else {
-                    return item.category === filterValue; // Check Category (Starters, Main, etc.)
-                }
-            });
+    function applyFilters() {
+        const activeBtn = document.querySelector('#menu-filters button.active');
+        const filterValue = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-            // 4. Update Global State
-            currentMenuData = filteredItems;
+        // Filter the Data based on both category/type and search term
+        const filteredItems = menuData.filter(item => {
+            // Category check
+            let categoryMatch = false;
+            if (filterValue === 'all') {
+                categoryMatch = true;
+            } else if (filterValue === 'veg' || filterValue === 'non-veg') {
+                categoryMatch = item.type === filterValue;
+            } else {
+                categoryMatch = item.category === filterValue;
+            }
 
-            // 5. Re-render the Menu
-            displayMenu(currentMenuData);
+            // Search term check
+            let searchMatch = true;
+            if (searchTerm) {
+                const nameMatch = item.name.toLowerCase().includes(searchTerm);
+                const descMatch = item.description.toLowerCase().includes(searchTerm);
+                searchMatch = nameMatch || descMatch;
+            }
+
+            return categoryMatch && searchMatch;
         });
-    });
+
+        // Update Global State
+        currentMenuData = filteredItems;
+
+        // Re-render the Menu
+        displayMenu(currentMenuData);
+    }
+
+    if (filterButtons) {
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterButtons.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+
+                applyFilters();
+            });
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            // Reset category filter to 'All' when searching to search entire menu
+            // or keep the current filter. Keeping current filter is generally better UX 
+            // but let's just trigger applyFilters.
+            applyFilters();
+        });
+    }
 }
 
 /**
@@ -1023,7 +1160,7 @@ function setupBackToTop() {
     if (!mybutton) return;
 
     // Scroll Logic
-    window.onscroll = function() {
+    window.onscroll = function () {
         if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
             mybutton.style.display = "block";
         } else {
@@ -1065,8 +1202,29 @@ function checkShopStatus() {
     }
 }
 
+/**
+ * Loads the saved cart from localStorage.
+ */
+function loadCartFromLocal() {
+    const savedCart = localStorage.getItem('flavorsAndForkCart');
+    if (savedCart) {
+        try {
+            cart = JSON.parse(savedCart);
+            updateCartUI();
+        } catch (e) {
+            console.error("Could not parse saved cart data", e);
+            cart = [];
+        }
+    } else {
+        cart = [];
+    }
+}
+
 // Initialize Pages
-document.addEventListener('DOMContentLoaded', async() => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load Cart from LocalStorage
+    loadCartFromLocal();
+
     // Check Status Immediately
     checkShopStatus();
 
@@ -1106,7 +1264,7 @@ document.addEventListener('DOMContentLoaded', async() => {
 const searchInput = document.getElementById('menuSearch');
 
 if (searchInput) {
-    searchInput.addEventListener('input', function(event) {
+    searchInput.addEventListener('input', function (event) {
         const searchTerm = event.target.value.toLowerCase();
 
         // Filter the array based on name or description

@@ -144,6 +144,7 @@ body.dark-mode .table-box:hover {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -594,18 +595,104 @@ select.form-control {
 }
 
 
-/* Search Bar Styling */
+/* Search Pill Styling */
 
-#menuSearch:focus {
-    background-color: #212529;
-    /* Keeps it dark */
-    color: white;
-    border-color: var(--gold-color, #ffc107);
-    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
-    /* Gold glow */
+.search-pill {
+    border-radius: 50px;
+    background-color: #121212;
+    border: 2px solid var(--gold-color, #d4af37);
+    overflow: hidden;
+    /* Ensures child elements respect border radius */
+    padding: 0;
+    transition: box-shadow 0.3s ease;
 }
 
-#menuSearch::placeholder {
+.search-pill .form-control {
+    background-color: transparent !important;
+    border: none;
+    color: white !important;
+    padding-left: 20px;
+}
+
+.search-pill .input-group-text {
+    background-color: transparent;
+    border: none;
+    color: var(--gold-color, #d4af37);
+    padding-right: 15px;
+}
+
+.search-pill:focus-within {
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    /* Glowing gold effect */
+}
+
+.search-pill .form-control:focus {
+    box-shadow: none;
+    /* Removes default bootstrap blue outline */
+    outline: none;
+}
+
+.search-pill .form-control::placeholder {
     color: #adb5bd;
-    /* Muted text for the placeholder */
+    /* Muted placeholder text */
+}
+
+/* --- Promo Code Section --- */
+
+.promo-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.promo-group .promo-input:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.custom-gold-input {
+    color: var(--gold-color, #ffc107) !important;
+}
+
+/* Hard override for promo input states to keep it gold and dark */
+input#promoCodeInput,
+input#promoCodeInput:focus,
+input#promoCodeInput:disabled {
+    color: var(--gold-color, #ffc107) !important;
+    background-color: #212529 !important;
+    -webkit-text-fill-color: var(--gold-color, #ffc107) !important;
+    /* Forces color in webkit browsers when disabled */
+    opacity: 1 !important;
+    /* Removes default disabled fade */
+}
+
+.custom-gold-input::placeholder {
+    color: var(--gold-color, #ffc107) !important;
+    opacity: 0.7 !important;
+    /* Slight fade for placeholder */
+}
+
+.custom-gold-input:focus {
+    color: var(--gold-color, #ffc107) !important;
+}
+
+.promo-group:focus-within {
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+}
+
+.promo-group:focus-within .promo-icon-container,
+.promo-group:focus-within .promo-input {
+    border-color: var(--gold-color, #d4af37) !important;
+}
+
+.promo-btn {
+    background-color: var(--gold-color, #d4af37) !important;
+    border-color: var(--gold-color, #d4af37) !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+}
+
+.promo-btn:hover {
+    background-color: var(--gold-hover, #b4941f) !important;
+    border-color: var(--gold-hover, #b4941f) !important;
+    color: #000 !important;
 }
