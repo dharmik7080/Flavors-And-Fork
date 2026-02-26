@@ -16,6 +16,8 @@ if (window.location.hash) {
  */
 // --- Master Menu Data ---
 let currentMenuData = []; // Track currently displayed items for re-rendering
+let currentCategory = 'All';
+let currentSearchTerm = '';
 const menuData = [
     // --- STARTERS ---
     { id: 1, name: "Paneer Tikka Masala", category: "main", type: "veg", price: 350, image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80", description: "Spiced paneer cubes grilled to perfection." },
@@ -326,6 +328,19 @@ function saveCartToLocal() {
     localStorage.setItem('flavorsAndForkCart', JSON.stringify(cart));
 }
 
+// Progressive Enhancement: Haptic feedback for supported Android devices (Ignored by iOS). This is for my college viva documentation.
+function triggerHapticFeedback() {
+    if ('vibrate' in navigator) {
+        try {
+            navigator.vibrate(50);
+        } catch (error) {
+            // Fails silently if system blocks it
+        }
+    } else {
+        console.log("Haptic feedback not supported on this device.");
+    }
+}
+
 /**
  * Global variable to track the cart items.
  */
@@ -353,12 +368,34 @@ function addToCart(id) {
     // Trigger UI Updates
     updateCartUI();
     updateItemButton(id); // Only update this specific button
+    updateCartBadge(); // Update Navbar Badge
 
-    // Optional: Feedback vibration (mobile)
-    if (navigator.vibrate) navigator.vibrate(50);
+    // Trigger Haptic Feedback
+    triggerHapticFeedback();
 
     // Show Beautiful Toast Notification
     showCartToast(item.name);
+}
+
+/**
+ * Updates the navbar cart badge with total item quantity.
+ */
+function updateCartBadge() {
+    const badge = document.getElementById('cartBadge');
+    if (!badge) return;
+
+    let totalItems = 0;
+    cart.forEach(item => {
+        totalItems += item.qty;
+    });
+
+    badge.innerText = totalItems;
+
+    if (totalItems > 0) {
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
 }
 
 /**
@@ -398,6 +435,7 @@ function removeFromCart(id) {
     // Trigger UI Updates
     updateCartUI();
     updateItemButton(id); // Only update this specific button
+    updateCartBadge(); // Update Navbar Badge
 }
 
 /**
@@ -408,6 +446,7 @@ function clearCart() {
     localStorage.removeItem('flavorsAndForkCart'); // Remove the saved data too
 
     updateCartUI(); // Update the cart drawer UI
+    updateCartBadge(); // Update Navbar Badge
 
     // Close the Offcanvas Drawer
     const drawerEl = document.getElementById('cartDrawer');
@@ -551,7 +590,7 @@ function updateCartUI() {
                         <span class="fs-2 fw-bold text-warning font-serif" id="cartFinalTotal">₹${Math.round(grandTotal)}</span>
                     </div>
                     
-                    <button class="btn btn-checkout w-100 mb-3" onclick="openPaymentModal()">
+                    <button class="btn btn-checkout w-100 mb-3" onclick="handlePlaceOrder()">
                         Place Order <i class="bi bi-arrow-right-circle-fill ms-2"></i>
                     </button>
                     
@@ -620,11 +659,61 @@ function applyPromoCode() {
         applyBtn.disabled = true;
         promoInput.disabled = true;
 
+        // Store active discount info globally for receipt generation
+        window.activeDiscount = discountAmount;
+
     } else {
         // Display Error Message
         promoMessage.innerText = code === '' ? 'Please enter a code.' : 'Invalid promo code.';
         promoMessage.className = 'mt-2 mb-0 small text-danger fw-bold';
         promoMessage.style.display = 'block';
+    }
+}
+
+/**
+ * Handles placing the final order directly without printing.
+ */
+function handlePlaceOrder() {
+    // 1. Check if the cart is empty
+    if (cart.length === 0) {
+        alert("Warning: Your cart is empty. Please add items before placing an order.");
+        return;
+    }
+
+    // 2. Show a Bootstrap Toast success notification
+    const toastEl = document.getElementById('myToast');
+    const toastNameSpan = document.getElementById('toastItemName');
+    if (toastEl && toastNameSpan) {
+        toastNameSpan.innerText = "Order Placed Successfully!";
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
+
+    // 3. Empty the main cart array AND remove the cart data from localStorage
+    cart = [];
+    localStorage.removeItem('flavorsAndForkCart');
+
+    // 4. Update the UI to reflect the empty cart (resets totals, updates badge, re-renders menu buttons)
+    updateCartUI();
+    updateCartBadge();
+    displayMenu(currentMenuData);
+
+    // Close the Bootstrap modal if open (used in payment flows)
+    const modalEl = document.getElementById('paymentModal');
+    if (modalEl) {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+
+    // Also securely close the offcanvas Cart Drawer 
+    const drawerEl = document.getElementById('cartDrawer');
+    if (drawerEl) {
+        const drawerInstance = bootstrap.Offcanvas.getInstance(drawerEl);
+        if (drawerInstance) {
+            drawerInstance.hide();
+        }
     }
 }
 
@@ -736,46 +825,42 @@ function displayMenu(items) {
 }
 
 /**
+ * Applies both category and search filters sequentially.
+ */
+function applyFilters() {
+    let filteredArray = [...menuData];
+
+    // First, filter by category
+    if (currentCategory !== 'All' && currentCategory !== 'all') {
+        filteredArray = filteredArray.filter(item => {
+            if (currentCategory === 'veg' || currentCategory === 'non-veg') {
+                return item.type === currentCategory;
+            }
+            return item.category === currentCategory;
+        });
+    }
+
+    // Next, filter by search
+    if (currentSearchTerm !== '') {
+        const lowerSearch = currentSearchTerm.toLowerCase();
+        filteredArray = filteredArray.filter(item => {
+            const nameMatch = item.name.toLowerCase().includes(lowerSearch);
+            const descMatch = (item.description || '').toLowerCase().includes(lowerSearch);
+            return nameMatch || descMatch;
+        });
+    }
+
+    // Finally, pass the resulting filtered array to displayMenu
+    currentMenuData = filteredArray;
+    displayMenu(currentMenuData);
+}
+
+/**
  * Sets up menu filter buttons.
  */
 function setupFilters() {
     const filterButtons = document.querySelectorAll('#menu-filters button');
     const searchInput = document.getElementById('menuSearch');
-
-    function applyFilters() {
-        const activeBtn = document.querySelector('#menu-filters button.active');
-        const filterValue = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-
-        // Filter the Data based on both category/type and search term
-        const filteredItems = menuData.filter(item => {
-            // Category check
-            let categoryMatch = false;
-            if (filterValue === 'all') {
-                categoryMatch = true;
-            } else if (filterValue === 'veg' || filterValue === 'non-veg') {
-                categoryMatch = item.type === filterValue;
-            } else {
-                categoryMatch = item.category === filterValue;
-            }
-
-            // Search term check
-            let searchMatch = true;
-            if (searchTerm) {
-                const nameMatch = item.name.toLowerCase().includes(searchTerm);
-                const descMatch = item.description.toLowerCase().includes(searchTerm);
-                searchMatch = nameMatch || descMatch;
-            }
-
-            return categoryMatch && searchMatch;
-        });
-
-        // Update Global State
-        currentMenuData = filteredItems;
-
-        // Re-render the Menu
-        displayMenu(currentMenuData);
-    }
 
     if (filterButtons) {
         filterButtons.forEach(btn => {
@@ -785,16 +870,17 @@ function setupFilters() {
                 // Add active class to clicked button
                 btn.classList.add('active');
 
+                // Update currentCategory variable and call applyFilters
+                currentCategory = btn.getAttribute('data-filter') || 'All';
                 applyFilters();
             });
         });
     }
 
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            // Reset category filter to 'All' when searching to search entire menu
-            // or keep the current filter. Keeping current filter is generally better UX 
-            // but let's just trigger applyFilters.
+        searchInput.addEventListener('input', (e) => {
+            // Update currentSearchTerm variable and call applyFilters
+            currentSearchTerm = e.target.value.trim();
             applyFilters();
         });
     }
@@ -1211,13 +1297,57 @@ function loadCartFromLocal() {
         try {
             cart = JSON.parse(savedCart);
             updateCartUI();
+            updateCartBadge(); // Update Navbar Badge
         } catch (e) {
             console.error("Could not parse saved cart data", e);
             cart = [];
+            updateCartBadge(); // Update Navbar Badge
         }
     } else {
         cart = [];
+        updateCartBadge(); // Update Navbar Badge
     }
+}
+
+/**
+ * Renders 6 skeleton cards into the menu container.
+ */
+function renderSkeletons() {
+    const menuContainer = document.getElementById('menu-container');
+    if (!menuContainer) return;
+
+    let skeletonHTML = '';
+    for (let i = 0; i < 6; i++) {
+        skeletonHTML += `
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0" style="background-color: var(--card-bg);">
+                    <div class="skeleton skeleton-img"></div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="skeleton skeleton-text" style="height: 24px; width: 70%; margin-bottom: 15px;"></div>
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text short"></div>
+                        <div class="skeleton skeleton-btn mt-auto"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    menuContainer.innerHTML = skeletonHTML;
+}
+
+/**
+ * Simulates a network fetch by showing skeletons for 1.5s then loading real data.
+ */
+function simulateNetworkFetch() {
+    const menuContainer = document.getElementById('menu-container');
+    if (!menuContainer) return;
+
+    renderSkeletons();
+
+    setTimeout(() => {
+        menuContainer.innerHTML = '';
+        displayMenu(currentMenuData); // Use current global state
+    }, 1500);
 }
 
 // Initialize Pages
@@ -1237,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const path = window.location.pathname;
 
     if (path.endsWith('menu.html')) {
-        displayMenu(menuData);
+        simulateNetworkFetch();
         setupFilters();
     } else if (path.endsWith('reservation.html')) {
         setupTableSelection();
