@@ -680,41 +680,8 @@ function handlePlaceOrder() {
         return;
     }
 
-    // 2. Show a Bootstrap Toast success notification
-    const toastEl = document.getElementById('myToast');
-    const toastNameSpan = document.getElementById('toastItemName');
-    if (toastEl && toastNameSpan) {
-        toastNameSpan.innerText = "Order Placed Successfully!";
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        toast.show();
-    }
-
-    // 3. Empty the main cart array AND remove the cart data from localStorage
-    cart = [];
-    localStorage.removeItem('flavorsAndForkCart');
-
-    // 4. Update the UI to reflect the empty cart (resets totals, updates badge, re-renders menu buttons)
-    updateCartUI();
-    updateCartBadge();
-    displayMenu(currentMenuData);
-
-    // Close the Bootstrap modal if open (used in payment flows)
-    const modalEl = document.getElementById('paymentModal');
-    if (modalEl) {
-        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-        if (modalInstance) {
-            modalInstance.hide();
-        }
-    }
-
-    // Also securely close the offcanvas Cart Drawer 
-    const drawerEl = document.getElementById('cartDrawer');
-    if (drawerEl) {
-        const drawerInstance = bootstrap.Offcanvas.getInstance(drawerEl);
-        if (drawerInstance) {
-            drawerInstance.hide();
-        }
-    }
+    // 2. Open the Payment Modal
+    openPaymentModal();
 }
 
 /**
@@ -977,6 +944,9 @@ function toggleFavorite(id) {
 }
 
 // --- Payment Logic ---
+
+let selectedPaymentMethod = null;
+
 /**
  * Opens the Payment Modal with the correct details.
  */
@@ -992,14 +962,8 @@ function openPaymentModal() {
     const modalAmountEl = document.getElementById('modal-pay-amount');
     if (modalAmountEl) modalAmountEl.innerText = grandTotal;
 
-    // Reset Button State
-    const payBtn = document.querySelector('.modal-footer .btn-success');
-    const btnText = document.getElementById('pay-btn-text');
-    const spinner = document.getElementById('pay-spinner');
-
-    if (payBtn) payBtn.disabled = false;
-    if (btnText) btnText.innerText = "Pay Now";
-    if (spinner) spinner.style.display = "none";
+    // Reset UI to Method Selection Step
+    resetPaymentModal();
 
     // Show Modal
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
@@ -1007,13 +971,61 @@ function openPaymentModal() {
 }
 
 /**
- * Processes the payment (Visually).
+ * Resets the payment modal to Step 1: Method Selection.
  */
-function processPayment() {
+function resetPaymentModal() {
+    selectedPaymentMethod = null;
+
+    // Toggle active containers
+    const methodsContainer = document.getElementById('payment-methods-container');
+    const confirmContainer = document.getElementById('payment-confirmation-container');
+    const modalFooter = document.getElementById('payment-modal-footer');
+
+    if (methodsContainer) methodsContainer.style.display = 'block';
+    if (confirmContainer) confirmContainer.style.display = 'none';
+    if (modalFooter) modalFooter.style.display = 'block';
+
+    // Reset Pay Now Button state
+    const payBtn = document.getElementById('pay-now-btn');
     const btnText = document.getElementById('pay-btn-text');
     const spinner = document.getElementById('pay-spinner');
-    const selectedMethod = document.querySelector('input[name="payment-method"]:checked').id;
-    const payBtn = document.querySelector('.modal-footer .btn-success');
+
+    if (payBtn) payBtn.disabled = false;
+    if (btnText) btnText.innerText = "Pay Now";
+    if (spinner) spinner.style.display = "none";
+}
+
+/**
+ * Handles clicks on a payment method. Transitions to Step 2.
+ * @param {string} method - The payment method chosen (e.g., 'UPI', 'Card', 'Cash').
+ */
+function handlePaymentClick(method) {
+    selectedPaymentMethod = method;
+
+    // Transition UI
+    const methodsContainer = document.getElementById('payment-methods-container');
+    const confirmContainer = document.getElementById('payment-confirmation-container');
+    const methodText = document.getElementById('selected-method-text');
+    const modalFooter = document.getElementById('payment-modal-footer');
+
+    if (methodsContainer) methodsContainer.style.display = 'none';
+    if (modalFooter) modalFooter.style.display = 'none'; // Hide cancel in step 2 to keep it clean
+    if (confirmContainer) confirmContainer.style.display = 'block';
+
+    if (methodText) {
+        if (method === 'UPI') methodText.innerText = "UPI / Google Pay";
+        else if (method === 'Card') methodText.innerText = "Credit / Debit Card";
+        else if (method === 'Cash') methodText.innerText = "Cash on Delivery";
+    }
+}
+
+/**
+ * Simulates the payment process before finalizing.
+ */
+function confirmPayment() {
+    const payBtn = document.getElementById('pay-now-btn');
+    const btnText = document.getElementById('pay-btn-text');
+    const spinner = document.getElementById('pay-spinner');
 
     // 1. Loading State
     if (btnText) btnText.innerText = "Processing...";
@@ -1022,43 +1034,53 @@ function processPayment() {
 
     // 2. Wait 2 seconds (Simulation)
     setTimeout(() => {
-        // 3. Generate Random ID (e.g., #ORD-4592)
-        const orderId = Math.floor(Math.random() * 9000 + 1000);
+        finalizeOrder(selectedPaymentMethod);
+    }, 2000);
+}
 
-        // 4. Custom Message based on Method
-        let msg = "";
-        if (selectedMethod === 'pay-cash') {
-            // Pay on Counter Logic
-            msg = `✅ Order Placed Successfully!\n\n🔹 YOUR TOKEN: #ORD-${orderId}\n\nPlease show this ID at the counter to complete payment.`;
-        } else {
-            // Online Payment Logic
-            msg = `✅ Payment Successful!\n\nTransaction ID: TXN-${orderId}\nYour food is being prepared.`;
-        }
+/**
+ * Finalizes the order directly when a payment method is clicked.
+ * @param {string} method - The payment method chosen (e.g., 'UPI', 'Card', 'Cash').
+ */
+function finalizeOrder(method) {
+    // 1. Generate Random ID (e.g., #ORD-4592)
+    const orderId = Math.floor(Math.random() * 9000 + 1000);
 
-        // 5. Show Success Alert
-        alert(msg);
-
-        // 6. Reset & Cleanup
-        cart = []; // Empty cart
-        updateCartUI(); // Update UI
-        displayMenu(currentMenuData); // Re-render menu to show updated state
-
-        // Close Modal
-        const modalEl = document.getElementById('paymentModal');
+    // 2. Hide the modal immediately
+    const modalEl = document.getElementById('paymentModal');
+    if (modalEl) {
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         if (modalInstance) modalInstance.hide();
+    }
 
-        // Close Drawer
-        const drawerEl = document.getElementById('cartDrawer');
+    // 3. Close the drawer if it is open
+    const drawerEl = document.getElementById('cartDrawer');
+    if (drawerEl) {
         const drawerInstance = bootstrap.Offcanvas.getInstance(drawerEl);
         if (drawerInstance) drawerInstance.hide();
+    }
 
-        // Reset Button state
-        if (btnText) btnText.innerText = "Pay Now";
-        if (spinner) spinner.style.display = "none";
-        if (payBtn) payBtn.disabled = false;
+    // 4. Show Success Toast Notification
+    const toastEl = document.getElementById('myToast');
+    const toastNameSpan = document.getElementById('toastItemName');
+    if (toastEl && toastNameSpan) {
+        let msg = `Order #ORD-${orderId} placed via ${method}!`;
+        if (method === 'Cash') {
+            msg = `Order #ORD-${orderId} placed! Please pay at counter.`;
+        }
+        toastNameSpan.innerText = msg;
+        const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+        toast.show();
+    }
 
-    }, 2000);
+    // 5. Completely clear the cart and localStorage
+    cart = [];
+    localStorage.removeItem('flavorsAndForkCart');
+
+    // 6. Update UI to reflect empty state
+    updateCartUI();
+    updateCartBadge();
+    displayMenu(currentMenuData);
 }
 
 // --- Newsletter Logic ---
